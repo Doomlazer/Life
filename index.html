@@ -1,23 +1,11 @@
 <!DOCTYPE html>
 <html>
 <body onload="fwdStep()">
-
-<p style="text-align: center;width:100%;Height:20%;">Conway's <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">Game of Life</a>: Cellular automata written in JS w/ HTML5 canvas.<br>Firefox is not currently supported, please use Chrome or Safari. <b>Photosensitivity Warning: Strobe Effect</b></p>
-
-<div id="canvasDiv" style="text-align: center;width:100%;Height:80%;margin-top:20%;">
-  <canvas id="canvas" width="240" height="120" style="border:1px solid #000000;scale:3;">Your browser does not support the HTML5 canvas tag.</canvas>
-  <img id="silhouette" src="sil.png" width="400" height="380" hidden />
-</div>
-
-<div id="tailDiv" style="text-align: center;width:100%;Height:20%;margin-top:20%;">
-  <p>Draw or click Randomize, then run simulation.</p>
-  <button id="runBtn" onclick="run()" style="background-color: #43f436;height:60px;">Run Sim</button>
-  <button id="stopBtn" onclick="stop()" style="background-color: #e7e7e7;height:60px;">Stop Sim </button>
-  <button onclick="fwdStep()" style="background-color: #e7e7e7;height:60px;">Single Step</button>
-  <button onclick="randBtn()" style="background-color: #e7e7e7;height:60px;">Randomize</button>
-  <button onclick="clrScrn()" style="background-color: #e7e7e7;height:60px">Clear</button>
-  <button id="zoomBut" onclick="zoom()" style="background-color: #e7e7e7;height:60px;">Zoom lvl: 3 of 5</button>
-</div>
+<p>Conway's <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">Game of Life</a>: Cellular automata written in JS w/ HTML5 canvas.</p>
+<p>Firefox is not currently supported, please use Chrome or Safari. <b></b>Photosensitivity Warning: Strobe Effect</b></p>
+<canvas id="canvas" width="240" height="120" style="border:1px solid #000000;zoom:3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+<img id="silhouette" src="sil.png" width="400" height="380" hidden />
 
 <script>
 const stn = document.getElementById("silhouette",{imageSmoothingEnabled: false});
@@ -25,29 +13,9 @@ const c = document.getElementById("canvas");
 const ctx = c.getContext("2d",{ willReadFrequently: true,imageSmoothingEnabled: false});
 var cW = c.width;
 var cH = c.height;
-//var zLevel = 3;
+var zLevel = 3;
 var interval;
 var flag = false,dot_flag = false,pX=0,pY=0,cX=0,cY=0;
-var wW, wH
-
-function updateSize() {
-  wW = window.innerWidth;
-  wH = window.innerHeight;
-  let cD = document.getElementById("canvasDiv");
-  cD.style.width = wW;
-  cD.style.height = wH;
-  cD.style.margin-top = 20%;
-  c.width = cD.width/4;
-  c.height = cD.height/4;
-  //c.style.margin-top = 20%;
-  let tD = document.getElementById("tailDiv");
-  tD.style.width = wW;
-  tD.style.height = wH * 0.2;
-  tD.style.margin-top = 80%;
-}
-
-updateSize();
-window.addEventListener("resize", updateSize);
 
 c.addEventListener("mousemove", function (e) {
   findxy('move', e)
@@ -313,6 +281,15 @@ function clrScrn() {
   ctx.putImageData(img, 0, 0);
 }
 </script>
+
+<p>Draw or click Randomize, then run simulation.</p>
+<button id="runBtn" onclick="run()" style="background-color: #43f436;zoom:2;">Run Sim</button>
+<button id="stopBtn" onclick="stop()" style="background-color: #e7e7e7;zoom:2;">Stop Sim</button>
+<button onclick="fwdStep()" style="zoom:2;">Single Step</button>
+<br><br>
+<button onclick="randBtn()" style="zoom:2;">Randomize</button>
+<button onclick="clrScrn()" style="zoom:2;">Clear</button>
+<button id="zoomBut" onclick="zoom()" style="zoom:2;">Zoom lvl: 3 of 5</button>
 
 </body>
 </html>
