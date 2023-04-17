@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<body onload="fwdStep()">
+
+<p style="text-align: center;width:100%;Height:20%;">Conway's <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">Game of Life</a>: Cellular automata written in JS w/ HTML5 canvas.<br>Firefox is not currently supported, please use Chrome or Safari. <b>Photosensitivity Warning: Strobe Effect</b></p>
+
+<div id="canvasDiv" style="text-align: center;width:100%;Height:80%;margin-top:20%;">
+  <canvas id="canvas" width="240" height="120" style="border:1px solid #000000;scale:3;">Your browser does not support the HTML5 canvas tag.</canvas>
+  <img id="silhouette" src="sil.png" width="400" height="380" hidden />
+</div>
+
+<div id="tailDiv" style="text-align: center;width:100%;Height:20%;margin-top:20%;">
+  <p>Draw or click Randomize, then run simulation.</p>
+  <button id="runBtn" onclick="run()" style="background-color: #43f436;height:60px;">Run Sim</button>
+  <button id="stopBtn" onclick="stop()" style="background-color: #e7e7e7;height:60px;">Stop Sim </button>
+  <button onclick="fwdStep()" style="background-color: #e7e7e7;height:60px;">Single Step</button>
+  <button onclick="randBtn()" style="background-color: #e7e7e7;height:60px;">Randomize</button>
+  <button onclick="clrScrn()" style="background-color: #e7e7e7;height:60px">Clear</button>
+  <button id="zoomBut" onclick="zoom()" style="background-color: #e7e7e7;height:60px;">Zoom lvl: 3 of 5</button>
+</div>
+
+<script>
+const stn = document.getElementById("silhouette",{imageSmoothingEnabled: false});
+const c = document.getElementById("canvas");
+const ctx = c.getContext("2d",{ willReadFrequently: true,imageSmoothingEnabled: false});
+var cW = c.width;
+var cH = c.height;
+//var zLevel = 3;
+var interval;
+var flag = false,dot_flag = false,pX=0,pY=0,cX=0,cY=0;
+var wW, wH
+
+function updateSize() {
+  wW = window.innerWidth;
+  wH = window.innerHeight;
+  let cD = document.getElementById("canvasDiv");
+  cD.style.width = wW;
+  cD.style.height = wH;
+  cD.style.margin-top = 20%;
+  c.width = cD.width/4;
+  c.height = cD.height/4;
+  //c.style.margin-top = 20%;
+  let tD = document.getElementById("tailDiv");
+  tD.style.width = wW;
+  tD.style.height = wH * 0.2;
+  tD.style.margin-top = 80%;
+}
+
+updateSize();
+window.addEventListener("resize", updateSize);
+
+c.addEventListener("mousemove", function (e) {
+  findxy('move', e)
+}, false);
+c.addEventListener("mousedown", function (e) {
+  findxy('down', e)
+}, false);
+c.addEventListener("mouseup", function (e) {
+  findxy('up', e)
+}, false);
+c.addEventListener("mouseout", function (e) {
+  findxy('out', e)
+}, false);
+
+c.addEventListener("touchmove", function (e) {
+  e.preventDefault();
+  findxy('tmove', e)
+}, { passive: false });
+c.addEventListener("touchstart", function (e) {
+  findxy('tstart', e)
+}, { passive: false });
+c.addEventListener("touchend", function (e) {
+  findxy('up', e)
+}, { passive: false });
+c.addEventListener("touchout", function (e) {
+  findxy('out', e)
+}, { passive: false });
+
+function findxy(res, e) {
+  if (res == 'down' || res == 'tstart') {
+    pX = cX;
+    pY = cY;
+    if (res == 'down') {
+      cX = (e.clientX/zLevel) - c.getBoundingClientRect().left;
+      cY = (e.clientY/zLevel) - c.getBoundingClientRect().top;
+    } else {
+      cX = (e.touches[0].clientX/zLevel) - c.getBoundingClientRect().left;
+      cY = (e.touches[0].clientY/zLevel) - c.getBoundingClientRect().top;
+    }
+  
+    flag = true;
+    dot_flag = true;
+    if (dot_flag) {
+      ctx.beginPath();
+      ctx.fillRect(cX, cY, 1, 1);
+      ctx.closePath();
+      dot_flag = false;
+    }
+  }
+  if (res == 'up' || res == "out") {
+    flag = false;
+  }
+  if (res == 'move' || res == 'tmove') {
+    if (flag) {
+      pX = cX;
+      pY = cY;
+    if (res == 'move') {
+      cX = (e.clientX/zLevel) - c.getBoundingClientRect().left;
+      cY = (e.clientY/zLevel) - c.getBoundingClientRect().top;
+    } else {
+      cX = (e.touches[0].clientX/zLevel) - c.getBoundingClientRect().left;
+      cY = (e.touches[0].clientY/zLevel) - c.getBoundingClientRect().top;
+    }
+      draw();
+    }
+  }
+}
+
+function draw() {
+  ctx.beginPath();
+  ctx.moveTo(pX, pY);
+  ctx.lineTo(cX, cY);
+  //ctx.strokeStyle = 2;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.closePath();
+}
+
+function fwdStep() {
+  stop();
+  step();
+}
+
+function step() {
+  let dataCopy = ctx.getImageData(0, 0, cW, cH);
+  let data = ctx.createImageData(cW, cH);
+  dataCopy.willReadFrequently = true;
+  data.imageSmoothingEnabled = false;
+  i=0
+  for (let j=0; j < cW*cH; j=j+1) {
+    let c = 0
+    if (dataCopy.data[i-(cW*4)-4] < 128) {c++} //top left neighbor 
+    if (dataCopy.data[i-(cW*4)] < 128) {c++} //top center neighbor 
+    if (dataCopy.data[i-(cW*4)+4] < 128) {c++} //top right neighbor 
+    if (dataCopy.data[i-4] < 128) {c++} //left neighbor 
+    if (dataCopy.data[i+4] < 128) {c++} //right neighbor 
+    if (dataCopy.data[i+(cW*4)-4] < 128) {c++} //top left neighbor 
+    if (dataCopy.data[i+(cW*4)] < 128) {c++} //top center neighbor 
+    if (dataCopy.data[i+(cW*4)+4] < 128) {c++} //top right neighbor 
+
+    if (c < 2 || c > 3) {
+      data.data[i] = 255;
+      data.data[i+1] = 255;
+      data.data[i+2] = 255;
+      data.data[i+3] = 255;
+    } else if ((c == 2 || c == 3) && (dataCopy.data[i] < 128))  {
+      data.data[i] = 0
+      data.data[i+1] = 0
+      data.data[i+2] = 0
+      data.data[i+3] = 255;
+    } else if (c == 3 && (dataCopy.data[i] > 128)){
+      data.data[i] = 0;
+      data.data[i+1] = 0;
+      data.data[i+2] = 0;
+      data.data[i+3] = 255;
+    } else {
+      data.data[i] = 255;
+      data.data[i+1] = 255;
+      data.data[i+2] = 255;
+      data.data[i+3] = 255;
+    }
+    i+=4;
+  }
+  ctx.putImageData(data, 0, 0);
+}
+
+function randBtn() {
+  switch (randF(4,0)) {
+    case 0:
+      noise();
+      break;
+    case 1:
+      shapes();
+      break;
+    case 2:
+      stencil();
+      break;
+    case 3:
+      lines(randF(3,0));
+      break;
+    default:
+      console.log("Error: randBtn() - no case for: "+r);
+  }
+}
+
+function noise() {
+  let img = ctx.createImageData(cW, cH);
+  let i = 0;
+  limit = randF(255,1);
+    
+  for (let j=0; j < cW*cH; j=j+1) {
+    let t;
+    if (randF(255,0) > limit) {
+      t = 255;
+    } else {
+      t = 0;
+    }
+    img.data[i] = t;
+    img.data[i+1] = t;
+    img.data[i+2] = t;
+    img.data[i+3] = 255;
+    i+=4;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function shapes() {
+  for (let i = 0; i<(randF(10,1));i+=1) {
+    let w = randF(100,1);
+    let h = randF(100,1);
+    let dx = randF((c.width-w),0);
+    let dy = randF((c.height-h),0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.lineWidth = randF(20,1);
+
+    let t = randF(10,0);
+    if (t > 4) {
+      ctx.strokeRect(dx, dy, w, h);
+    } else {
+      ctx.beginPath();
+      ctx.arc(100, 75, 50, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+  }
+}
+
+function stencil() {
+  ctx.drawImage(stn, randF(1200,0),randF(600,0),200,300, randF(100,0),randF(50,0),200,300);
+};
+
+function lines(s) {
+  let img = ctx.createImageData(cW, cH);
+  let i = 0;
+  let t;
+  let r = cW;
+    
+  for (j=0; j < cW*cH; j=j+1) {
+    if (j%r==0) {
+      if (s > 1) {
+        r = cW;
+      } else {
+        r = randF(cW,1);
+      }
+      if (randF(10,1) > 5) {
+       t = 0;
+      } else {
+       t = 255;
+      }
+    }
+    img.data[i] = t;
+    img.data[i+1] = t;
+    img.data[i+2] = t;
+    img.data[i+3] = 255;
+    i+=4;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function run() {
+  let r = document.getElementById("runBtn");
+  let s = document.getElementById("stopBtn");
+  r.style.backgroundColor = "#e7e7e7"; //grey
+  s.style.backgroundColor = "#f44336" //red
+  clearInterval(interval);
+  interval = setInterval(function() {
+  step();
+ }, 100);
+}
+
+function stop() {
+  let r = document.getElementById("runBtn");
+  let s = document.getElementById("stopBtn");
+  r.style.backgroundColor = "#36f443"; //blue
+  s.style.backgroundColor = "#e7e7e7"; //grey
+  clearInterval(interval);
+}
+
+function randF(a,b) {
+  return Math.floor(Math.random() * a) + b
+}
+
+function zoom() {
+  zLevel+=1;
+  if (zLevel>5) {
+    zLevel=1;
+  }
+  c.style.zoom = zLevel;
+  let z = document.getElementById("zoomBut");
+  z.textContent = "Zoom lvl: "+zLevel+" of 5";
+}
+
+function clrScrn() {
+  let img = ctx.createImageData(cW, cH);
+  let i = 0;
+    
+  for (j=0; j < cW*cH; j=j+1) {
+    img.data[i] = 255;
+    img.data[i+1] = 255;
+    img.data[i+2] = 255;
+    img.data[i+3] = 255;
+    i+=4;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+</script>
+
+</body>
+</html>
